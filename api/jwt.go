@@ -13,7 +13,7 @@ type UserClaims struct {
 	UserID string `json:"user_id"`
 }
 
-func createToken(userID string) (string, error) {
+func generateToken(userID string) (string, error) {
 	key := os.Getenv("JWT_KEY")
 	if key == "" {
 		return "", errors.New("Could not retrieve JWT key")

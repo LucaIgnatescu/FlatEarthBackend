@@ -3,10 +3,12 @@ package api
 import (
 	"os"
 	"testing"
+
+	"github.com/joho/godotenv"
 )
 
 func TestEnv(t *testing.T) {
-	loadEnv()
+	godotenv.Load()
 	dbUrl := os.Getenv("DB_URL")
 	if dbUrl == "" {
 		t.Fatal("Could not retrieve database url from .env")
@@ -14,7 +16,7 @@ func TestEnv(t *testing.T) {
 }
 
 func TestConn(t *testing.T) {
-	loadEnv()
+	godotenv.Load()
 	db, err := connectDB()
 	if err != nil {
 		t.Fatal("Could not connect to db")
@@ -26,7 +28,7 @@ func TestConn(t *testing.T) {
 }
 
 func TestInsertWithData(t *testing.T) {
-	loadEnv()
+	godotenv.Load()
 	db, err := connectDB()
 
 	if err != nil {
@@ -50,7 +52,7 @@ func TestInsertWithData(t *testing.T) {
 }
 
 func TestInsertWithoutData(t *testing.T) {
-	loadEnv()
+	godotenv.Load()
 	db, err := connectDB()
 
 	if err != nil {

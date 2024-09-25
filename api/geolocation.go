@@ -28,7 +28,7 @@ type GeoData struct {
 }
 
 func getData() (*GeoData, error) {
-	res, err := http.Get("http://ip-api.com/json/")
+	res, err := http.Get("http://ip-api.com/json/") // TODO: Check timeout timer
 	if err != nil {
 		return nil, err
 	}

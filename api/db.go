@@ -3,12 +3,9 @@ package api
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -26,16 +23,6 @@ type InteractionRecord struct {
 	event_type string
 	sent_at    string
 	payload    int
-}
-
-func loadEnv() {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatal("Couldn't get working directory")
-	}
-
-	path := filepath.Join(filepath.Dir(wd), ".env")
-	godotenv.Load(path)
 }
 
 func connectDB() (*sql.DB, error) {
