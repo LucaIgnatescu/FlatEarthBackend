@@ -40,7 +40,7 @@ func TestConn(t *testing.T) {
 	}
 }
 
-func TestInsertWithData(t *testing.T) {
+func TestInserts(t *testing.T) {
 	godotenv.Load()
 	db, err := connectDB()
 
@@ -57,11 +57,17 @@ func TestInsertWithData(t *testing.T) {
 		t.Fatal("Nil row returned")
 	}
 
-	t.Log(row)
 	if row.Region != data.Region || row.Lat != data.Lat || row.Lon != data.Lon {
 		t.Fatal("Record not matching provided data")
 	}
 
+	interaction := Interaction{"test", 0, row.UserID.String()}
+
+	_, err = insertEvent(db, &interaction)
+
+	if err != nil {
+		log.Fatal("Insertion faied: ", err)
+	}
 }
 
 func TestInsertWithoutData(t *testing.T) {
@@ -80,7 +86,7 @@ func TestInsertWithoutData(t *testing.T) {
 	}
 }
 
-func TestInteraction(t *testing.T) {
+func TestMalformedInsert(t *testing.T) {
 	godotenv.Load()
 	db, err := connectDB()
 
@@ -88,11 +94,10 @@ func TestInteraction(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	interaction := Interaction{"test", 0, "0da01d08-7f22-48d6-b8c9-1ca0a683713e"}
+	interaction := Interaction{"test", 123, "malformed-uuid"}
 
-	row, err := insertEvent(db, &interaction)
-	if err != nil {
-		log.Fatal("Insertion faied: ", err)
+	_, err = insertEvent(db, &interaction)
+	if err == nil {
+		t.Fatal("Malformed input inserted into db")
 	}
-	t.Log(row)
 }
