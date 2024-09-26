@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type SetupReponse struct {
+type RegisterResponse struct {
 	Status string `json:"status"`
 	Token  string `json:"token"`
 }
@@ -43,12 +43,13 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	response, err := json.Marshal(SetupReponse{"success", token})
+	response, err := json.Marshal(RegisterResponse{"success", token})
 	if err != nil {
 		log.Println("Could not construct response:", err)
 		w.WriteHeader(500)
 		return
 	}
+
 	w.Write(response)
 }
 
@@ -83,30 +84,35 @@ func logEvent(w http.ResponseWriter, r *http.Request) {
 	tokenStr := parseHeader(r)
 
 	if tokenStr == "" {
-		w.WriteHeader(401)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	claims, err := parseToken(tokenStr)
 
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	userID := claims.UserID
-	log.Println(userID)
 
 	var interaction Interaction
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println("Could not read body:", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	json.Unmarshal(body, &interaction)
 	interaction.UserID = userID
-	log.Println(interaction)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func CreateRouter() *http.ServeMux {
 	router := http.NewServeMux()
-	router.HandleFunc("/setup", registerUser)
+	router.HandleFunc("/register", registerUser)
 	router.HandleFunc("POST /log", logEvent)
 	return router
 }
