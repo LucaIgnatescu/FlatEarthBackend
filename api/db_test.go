@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"os"
 	"testing"
 
@@ -9,9 +10,21 @@ import (
 
 func TestEnv(t *testing.T) {
 	godotenv.Load()
-	dbUrl := os.Getenv("DB_URL")
-	if dbUrl == "" {
-		t.Fatal("Could not retrieve database url from .env")
+	dbpwd := os.Getenv("DB_PWD")
+	if dbpwd == "" {
+		t.Fatalf("Error loading db password")
+	}
+	dbuser := os.Getenv("DB_USER")
+	if dbuser == "" {
+		t.Fatalf("Error loading db user")
+	}
+	dbhost := os.Getenv("DB_HOST")
+	if dbhost == "" {
+		t.Fatalf("Error loading db host")
+	}
+	dbport := os.Getenv("DB_PORT")
+	if dbport == "" {
+		t.Fatalf("Error loading db port")
 	}
 }
 
@@ -65,4 +78,21 @@ func TestInsertWithoutData(t *testing.T) {
 	if err == nil {
 		t.Fatal(err)
 	}
+}
+
+func TestInteraction(t *testing.T) {
+	godotenv.Load()
+	db, err := connectDB()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	interaction := Interaction{"test", 0, "0da01d08-7f22-48d6-b8c9-1ca0a683713e"}
+
+	row, err := insertEvent(db, &interaction)
+	if err != nil {
+		log.Fatal("Insertion faied: ", err)
+	}
+	t.Log(row)
 }

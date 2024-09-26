@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/google/uuid"
@@ -18,15 +19,25 @@ type UserRecord struct {
 }
 
 type InteractionRecord struct {
-	EventID    int8
-	UserID     uuid.UUID
-	event_type string
-	sent_at    string
-	payload    int
+	EventID   int8
+	UserID    uuid.UUID
+	EventType string
+	SentAt    string
+	Payload   int
 }
 
 func connectDB() (*sql.DB, error) {
-	connStr := os.Getenv("DB_URL")
+	dbpwd := os.Getenv("DB_PWD")
+	dbuser := os.Getenv("DB_USER")
+	dbhost := os.Getenv("DB_HOST")
+	dbport := os.Getenv("DB_PORT")
+
+	if dbpwd == "" || dbuser == "" || dbhost == "" || dbport == "" {
+		return nil, errors.New("Error loading all environment variables")
+	}
+	connStr := fmt.Sprintf("user=%v password=%v host=%v port=%v dbname=postgres",
+		dbuser, dbpwd, dbhost, dbport)
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
@@ -36,7 +47,7 @@ func connectDB() (*sql.DB, error) {
 
 func insertNewUser(db *sql.DB, data *GeoData) (*UserRecord, error) {
 	if data == nil {
-		return nil, errors.New("data object is null") // TODO: Support this
+		return nil, errors.New("Data object is null") // TODO: Support this
 	}
 
 	query := `
@@ -45,7 +56,27 @@ func insertNewUser(db *sql.DB, data *GeoData) (*UserRecord, error) {
     RETURNING *
   `
 	var row UserRecord
-	err := db.QueryRow(query, data.Region, data.Lat, data.Lon).Scan(&row.UserID, &row.Region, &row.Lat, &row.Lon, &row.JoinedAt)
+	err := db.QueryRow(query, data.Region, data.Lat, data.Lon).
+		Scan(&row.UserID, &row.Region, &row.Lat, &row.Lon, &row.JoinedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+func insertEvent(db *sql.DB, data *Interaction) (*InteractionRecord, error) {
+	if data == nil {
+		return nil, errors.New("Data object is null")
+	}
+
+	query := `
+  INSERT INTO interactions (event_id, user_id, event_type, sent_at, payload) VALUES
+  (DEFAULT, $1, $2, DEFAULT, $3) RETURNING *
+  `
+
+	var row InteractionRecord
+	err := db.QueryRow(query, data.UserID, data.EventType, data.Payload).
+		Scan(&row.EventID, &row.UserID, &row.EventType, &row.SentAt, &row.Payload)
 	if err != nil {
 		return nil, err
 	}
