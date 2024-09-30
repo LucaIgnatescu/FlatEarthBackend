@@ -23,7 +23,7 @@ type InteractionRecord struct {
 	UserID    uuid.UUID
 	EventType string
 	SentAt    string
-	Payload   int
+	Payload   interface{}
 }
 
 func connectDB() (*sql.DB, error) {
