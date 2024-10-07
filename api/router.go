@@ -42,6 +42,9 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	response, err := json.Marshal(RegisterResponse{"success", token})
 	if err != nil {
@@ -70,7 +73,7 @@ Authorization: Bearer <token>
 
 	Body: {
 	 event_type: string
-	 payload?: number
+	 payload?: Object
 	}
 */
 
@@ -104,15 +107,19 @@ func logEvent(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	json.Unmarshal(body, &interaction)
 	interaction.UserID = userID
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func CreateRouter() *http.ServeMux {
+func CreateRouter() http.Handler {
 	router := http.NewServeMux()
 	router.HandleFunc("/register", registerUser)
 	router.HandleFunc("POST /log", logEvent)
-	return router
+
+	wrapperRouter := ApplyMiddleware(router, LogMiddleware, CorsMiddleware)
+
+	return wrapperRouter
 }

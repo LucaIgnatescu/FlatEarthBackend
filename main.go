@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/LucaIgnatescu/FlatEarthBackend/api"
@@ -14,5 +15,6 @@ func main() {
 		Addr:    ":8080",
 		Handler: router,
 	}
+	log.Println("Listening on port 8080...")
 	server.ListenAndServe()
 }

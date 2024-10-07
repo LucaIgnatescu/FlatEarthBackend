@@ -18,7 +18,7 @@ Every interaction will be logged here.
 
 |event_id| user_id | event_type | sent_at |payload|
 |--------|--------|-----------|-----------|-------|
-|bigint  |uuid    | varchar   | timestamp |int
+|bigint  |uuid    | varchar   | timestamp |jsonb  |
 
 TODO: refactor EventType info enum
 
