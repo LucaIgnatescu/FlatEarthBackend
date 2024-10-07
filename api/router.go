@@ -78,8 +78,8 @@ Authorization: Bearer <token>
 */
 
 type Interaction struct {
-	EventType string  `json:"event_type"`
-	Payload   float32 `json:"payload"`
+	EventType string          `json:"event_type"`
+	Payload   json.RawMessage `json:"payload"`
 	UserID    string
 }
 
@@ -110,6 +110,21 @@ func logEvent(w http.ResponseWriter, r *http.Request) {
 
 	json.Unmarshal(body, &interaction)
 	interaction.UserID = userID
+
+	db, err := connectDB()
+	if err != nil {
+		log.Println("Could not connect to db:", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	_, err = insertEvent(db, &interaction)
+
+	if err != nil {
+		log.Println("Could not insert interaction record:", err)
+		w.WriteHeader(500)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 }
