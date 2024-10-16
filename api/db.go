@@ -64,19 +64,27 @@ func insertNewUser(db *sql.DB, data *GeoData) (*UserRecord, error) {
 	return &row, nil
 }
 
+// NOTE: This function does not check if data.Payload is valid json directly
+// If it isn't, postgres will error at the insert
 func insertEvent(db *sql.DB, data *Interaction) (*InteractionRecord, error) {
 	if data == nil {
 		return nil, errors.New("Data object is null")
 	}
 
+	var row InteractionRecord
 	query := `
   INSERT INTO interactions (event_id, user_id, event_type, sent_at, payload) VALUES
   (DEFAULT, $1, $2, DEFAULT, $3) RETURNING *
   `
+	var err error
+	if data.Payload == nil {
+		err = db.QueryRow(query, data.UserID, data.EventType, nil).
+			Scan(&row.EventID, &row.UserID, &row.EventType, &row.SentAt, &row.Payload)
+	} else {
+		err = db.QueryRow(query, data.UserID, data.EventType, data.Payload).
+			Scan(&row.EventID, &row.UserID, &row.EventType, &row.SentAt, &row.Payload)
+	}
 
-	var row InteractionRecord
-	err := db.QueryRow(query, data.UserID, data.EventType, data.Payload).
-		Scan(&row.EventID, &row.UserID, &row.EventType, &row.SentAt, &row.Payload)
 	if err != nil {
 		return nil, err
 	}

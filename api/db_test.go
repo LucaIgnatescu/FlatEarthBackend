@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"testing"
@@ -61,12 +62,19 @@ func TestInserts(t *testing.T) {
 		t.Fatal("Record not matching provided data")
 	}
 
-	interaction := Interaction{"test", 0, row.UserID.String()}
+	interaction := Interaction{"test", nil, row.UserID.String()}
 
 	_, err = insertEvent(db, &interaction)
 
 	if err != nil {
-		log.Fatal("Insertion faied: ", err)
+		log.Fatal("Insertion with empty payload failed: ", err)
+	}
+	interaction = Interaction{"test", json.RawMessage(`{"test": "test"}`), row.UserID.String()}
+
+	_, err = insertEvent(db, &interaction)
+
+	if err != nil {
+		log.Fatal("Insertion with nonempty payload failed: ", err)
 	}
 }
 
@@ -93,8 +101,7 @@ func TestMalformedInsert(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	interaction := Interaction{"test", 123, "malformed-uuid"}
+	interaction := Interaction{"test", json.RawMessage("abc"), "malformed-uuid"}
 
 	_, err = insertEvent(db, &interaction)
 	if err == nil {
