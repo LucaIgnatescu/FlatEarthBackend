@@ -16,5 +16,6 @@ func main() {
 		Handler: router,
 	}
 	log.Println("Listening on port 8080...")
-	server.ListenAndServe()
+	err := server.ListenAndServe()
+	log.Fatal(err)
 }
