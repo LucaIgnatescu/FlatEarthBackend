@@ -19,7 +19,7 @@ type UserRecord struct {
 }
 
 type InteractionRecord struct {
-	EventID   int8
+	EventID   uuid.UUID
 	UserID    uuid.UUID
 	EventType string
 	SentAt    string
@@ -35,7 +35,7 @@ func connectDB() (*sql.DB, error) {
 	if dbpwd == "" || dbuser == "" || dbhost == "" || dbport == "" {
 		return nil, errors.New("Error loading all environment variables")
 	}
-	connStr := fmt.Sprintf("user=%v password=%v host=%v port=%v dbname=postgres",
+	connStr := fmt.Sprintf("user=%v password=%v host=%v port=%v dbname=postgres binary_parameters=yes",
 		dbuser, dbpwd, dbhost, dbport)
 
 	db, err := sql.Open("postgres", connStr)
@@ -70,7 +70,6 @@ func insertEvent(db *sql.DB, data *Interaction) (*InteractionRecord, error) {
 	if data == nil {
 		return nil, errors.New("Data object is null")
 	}
-
 	var row InteractionRecord
 	query := `
   INSERT INTO interactions (event_id, user_id, event_type, sent_at, payload) VALUES
@@ -81,7 +80,7 @@ func insertEvent(db *sql.DB, data *Interaction) (*InteractionRecord, error) {
 		err = db.QueryRow(query, data.UserID, data.EventType, nil).
 			Scan(&row.EventID, &row.UserID, &row.EventType, &row.SentAt, &row.Payload)
 	} else {
-		err = db.QueryRow(query, data.UserID, data.EventType, data.Payload).
+		err = db.QueryRow(query, data.UserID, data.EventType, string(data.Payload)).
 			Scan(&row.EventID, &row.UserID, &row.EventType, &row.SentAt, &row.Payload)
 	}
 

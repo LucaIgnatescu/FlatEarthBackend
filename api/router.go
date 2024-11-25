@@ -41,11 +41,6 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
 	response, err := json.Marshal(RegisterResponse{"success", token})
 	if err != nil {
 		log.Println("Could not construct response:", err)
@@ -54,6 +49,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(response)
+	return
 }
 
 func parseHeader(r *http.Request) string {
@@ -110,14 +106,12 @@ func logEvent(w http.ResponseWriter, r *http.Request) {
 
 	json.Unmarshal(body, &interaction)
 	interaction.UserID = userID
-
 	db, err := connectDB()
 	if err != nil {
 		log.Println("Could not connect to db:", err)
 		w.WriteHeader(500)
 		return
 	}
-
 	_, err = insertEvent(db, &interaction)
 
 	if err != nil {
