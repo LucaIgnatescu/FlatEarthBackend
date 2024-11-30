@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
+	"strings"
 )
 
 type Middleware func(http.Handler) http.HandlerFunc
@@ -36,7 +38,7 @@ func LogMiddleware(next http.Handler) http.HandlerFunc {
 	})
 }
 
-func RateLimit(next http.Handler) http.HandlerFunc {
+func RateLimitMiddleware(next http.Handler) http.HandlerFunc {
 	limiter := NewLimiter()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -54,6 +56,37 @@ func RateLimit(next http.Handler) http.HandlerFunc {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func parseHeader(r *http.Request) string {
+	split := strings.Split(r.Header.Get("Authorization"), " ")
+
+	if len(split) != 2 || split[0] != "Bearer" {
+		return ""
+	}
+
+	return split[1]
+}
+
+func ProtectMiddleware(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tokenStr := parseHeader(r)
+
+		if tokenStr == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		claims, err := parseToken(tokenStr)
+
+		if err != nil {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "claims", claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
 }
 
 func ApplyMiddleware(next http.Handler, middleware ...Middleware) http.Handler {

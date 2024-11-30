@@ -52,16 +52,6 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func parseHeader(r *http.Request) string {
-	split := strings.Split(r.Header.Get("Authorization"), " ")
-
-	if len(split) != 2 || split[0] != "Bearer" {
-		return ""
-	}
-
-	return split[1]
-}
-
 /*
 	NOTE: Request should have the following structure
 
@@ -80,17 +70,11 @@ type Interaction struct {
 }
 
 func logEvent(w http.ResponseWriter, r *http.Request) {
-	tokenStr := parseHeader(r)
 
-	if tokenStr == "" {
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
+	claims, ok := r.Context().Value("claims").(*UserClaims)
 
-	claims, err := parseToken(tokenStr)
-
-	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
+	if !ok || claims == nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
