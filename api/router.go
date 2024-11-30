@@ -53,17 +53,6 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-/*
-	NOTE: Request should have the following structure
-
-Authorization: Bearer <token>
-
-	Body: {
-	 event_type: string
-	 payload?: Object
-	}
-*/
-
 type Interaction struct {
 	EventType string          `json:"event_type"`
 	Payload   json.RawMessage `json:"payload"`
@@ -162,7 +151,7 @@ func LogReport(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	err = insetBugReport(db, &payload, userUUID)
+	err = insertBugReport(db, &payload, userUUID)
 	if err != nil {
 		log.Println("Could not insert bug report:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -185,15 +174,48 @@ type Survey1Payload struct {
 }
 
 func LogSurvey1(w http.ResponseWriter, r *http.Request) {
-
 	claims, ok := r.Context().Value("claims").(*UserClaims)
 	if !ok || claims == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// userID := claims.UserID
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println("Could not read body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	userID := claims.UserID
+	userUUID, err := uuid.Parse(userID)
+
+	if err != nil {
+		log.Println("Malformed userid:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var payload Survey1Payload
+
+	err = json.Unmarshal(body, &payload)
+	if err != nil {
+		log.Println("Could not unmarshal body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	db, err := connectDB()
+	if err != nil {
+		log.Println("Could not connect to db:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	err = insertSurvey1(db, &payload, userUUID)
+	if err != nil {
+		log.Println("Could not insert bug report:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 /*
@@ -211,16 +233,60 @@ type Survey2Payload struct {
 }
 
 func LogSurvey2(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("claims").(*UserClaims)
+	if !ok || claims == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println("Could not read body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	userID := claims.UserID
+	userUUID, err := uuid.Parse(userID)
+
+	if err != nil {
+		log.Println("Malformed userid:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var payload Survey2Payload
+
+	err = json.Unmarshal(body, &payload)
+	if err != nil {
+		log.Println("Could not unmarshal body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	db, err := connectDB()
+	if err != nil {
+		log.Println("Could not connect to db:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	err = insertSurvey2(db, &payload, userUUID)
+	if err != nil {
+		log.Println("Could not insert bug report:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func CreateRouter() http.Handler {
 	router := http.NewServeMux()
 	logRouter := http.NewServeMux()
+
 	logRouter.HandleFunc("POST /report", LogReport)
 	logRouter.HandleFunc("POST /event", LogEvent)
+	logRouter.HandleFunc("POST /survey1", LogSurvey1)
+	logRouter.HandleFunc("POST /survey2", LogSurvey2)
 
-	wrappedLogRouter := ApplyMiddleware(logRouter, ProtectMiddleware, RateLimitMiddleware)
+	wrappedLogRouter := ApplyMiddleware(logRouter, AuthMiddleware, RateLimitMiddleware)
 
 	router.Handle("/log/", http.StripPrefix("/log", wrappedLogRouter))
 	router.HandleFunc("/register", registerUser)

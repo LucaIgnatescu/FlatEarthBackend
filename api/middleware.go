@@ -68,7 +68,17 @@ func parseHeader(r *http.Request) string {
 	return split[1]
 }
 
-func ProtectMiddleware(next http.Handler) http.HandlerFunc {
+/*
+	NOTE: Request should have the following structure
+
+Authorization: Bearer <token>
+
+	Body: {
+	 event_type: string
+	 payload?: Object
+	}
+*/
+func AuthMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenStr := parseHeader(r)
 

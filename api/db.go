@@ -90,7 +90,7 @@ func insertEvent(db *sql.DB, data *Interaction) (*InteractionRecord, error) {
 	return &row, nil
 }
 
-func insetBugReport(db *sql.DB, data *BugPayload, userID uuid.UUID) error {
+func insertBugReport(db *sql.DB, data *BugPayload, userID uuid.UUID) error {
 	if data == nil {
 		return errors.New("Bug payload is null")
 	}
@@ -98,4 +98,53 @@ func insetBugReport(db *sql.DB, data *BugPayload, userID uuid.UUID) error {
   INSERT INTO bugs (user_id, report, email) VALUES ($1, $2, $3)
   `
 	return db.QueryRow(query, userID, data.Report, data.Email).Err()
+}
+
+func insertSurvey1(db *sql.DB, data *Survey1Payload, userID uuid.UUID) error {
+	if data == nil {
+		return errors.New("Bug payload is null")
+	}
+
+	query := `
+		INSERT INTO survey1 (
+			user_id, answer1, answer2, answer3, answer4, answer5,
+			answer6, answer7, answer8, answer9, answer10, gender_details
+		) VALUES (
+			$1, $2, $3, $4, $5, $6,
+			$7, $8, $9, $10, $11, $12
+		)
+	`
+	return db.QueryRow(query, userID,
+		data.Answers[0],
+		data.Answers[1],
+		data.Answers[2],
+		data.Answers[3],
+		data.Answers[4],
+		data.Answers[5],
+		data.Answers[6],
+		data.Answers[7],
+		data.Answers[8],
+		data.Answers[9],
+		data.Gender).Err()
+}
+
+func insertSurvey2(db *sql.DB, data *Survey2Payload, userID uuid.UUID) error {
+	if data == nil {
+		return errors.New("Bug payload is null")
+	}
+
+	query := `
+    INSERT INTO survey2 (
+      user_id, answer1, answer2, answer3, answer4, extra_info
+    ) VALUES (
+      $1, $2, $3, $4, $5, $6
+    )
+  `
+	return db.QueryRow(query,
+		userID,
+		data.Answers[0],
+		data.Answers[1],
+		data.Answers[2],
+		data.Answers[3],
+		data.Info).Err()
 }
