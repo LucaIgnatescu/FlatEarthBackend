@@ -33,7 +33,7 @@ func CorsMiddleware(next http.Handler) http.HandlerFunc {
 
 func LogMiddleware(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Origin: %s, Method: %s\n", r.Header.Get("Origin"), r.Method)
+		log.Printf("Origin: %s, Method: %s, Endpoint: %s\n", r.Header.Get("Origin"), r.Method, r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
 }

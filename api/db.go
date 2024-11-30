@@ -89,3 +89,13 @@ func insertEvent(db *sql.DB, data *Interaction) (*InteractionRecord, error) {
 	}
 	return &row, nil
 }
+
+func insetBugReport(db *sql.DB, data *BugPayload, userID uuid.UUID) error {
+	if data == nil {
+		return errors.New("Bug payload is null")
+	}
+	query := `
+  INSERT INTO bugs (user_id, report, email) VALUES ($1, $2, $3)
+  `
+	return db.QueryRow(query, userID, data.Report, data.Email).Err()
+}

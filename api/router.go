@@ -5,7 +5,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
+
+	"github.com/google/uuid"
 )
 
 type RegisterResponse struct {
@@ -69,10 +70,8 @@ type Interaction struct {
 	UserID    string
 }
 
-func logEvent(w http.ResponseWriter, r *http.Request) {
-
+func LogEvent(w http.ResponseWriter, r *http.Request) {
 	claims, ok := r.Context().Value("claims").(*UserClaims)
-
 	if !ok || claims == nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -88,7 +87,12 @@ func logEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.Unmarshal(body, &interaction)
+	err = json.Unmarshal(body, &interaction)
+	if err != nil {
+		log.Println("Could not unmarshal body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	interaction.UserID = userID
 	db, err := connectDB()
 	if err != nil {
@@ -107,10 +111,119 @@ func logEvent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+/*
+Payload structure:
+
+	{
+	  report: string,
+	  email: string
+	}
+*/
+
+type BugPayload struct {
+	Report string `json:"report"`
+	Email  string `json:"email"`
+}
+
+func LogReport(w http.ResponseWriter, r *http.Request) {
+	claims, ok := r.Context().Value("claims").(*UserClaims)
+	if !ok || claims == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println("Could not read body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	userID := claims.UserID
+	userUUID, err := uuid.Parse(userID)
+
+	if err != nil {
+		log.Println("Malformed userid:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var payload BugPayload
+
+	err = json.Unmarshal(body, &payload)
+	if err != nil {
+		log.Println("Could not unmarshal body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	db, err := connectDB()
+	if err != nil {
+		log.Println("Could not connect to db:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	err = insetBugReport(db, &payload, userUUID)
+	if err != nil {
+		log.Println("Could not insert bug report:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+/*
+Payload structure:
+
+		{
+	    answers: int[10]
+	    gender_detail: string
+		}
+*/
+
+type Survey1Payload struct {
+	Answers [10]int `json:"answers"`
+	Gender  string  `json:"gender_detail"`
+}
+
+func LogSurvey1(w http.ResponseWriter, r *http.Request) {
+
+	claims, ok := r.Context().Value("claims").(*UserClaims)
+	if !ok || claims == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// userID := claims.UserID
+
+}
+
+/*
+Payload structure:
+
+		{
+	    answers: int[4]
+	    text: string
+		}
+*/
+
+type Survey2Payload struct {
+	Answers [4]int `json:"answers"`
+	Info    string `json:"text"`
+}
+
+func LogSurvey2(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func CreateRouter() http.Handler {
 	router := http.NewServeMux()
+	logRouter := http.NewServeMux()
+	logRouter.HandleFunc("POST /report", LogReport)
+	logRouter.HandleFunc("POST /event", LogEvent)
+
+	wrappedLogRouter := ApplyMiddleware(logRouter, ProtectMiddleware, RateLimitMiddleware)
+
+	router.Handle("/log/", http.StripPrefix("/log", wrappedLogRouter))
 	router.HandleFunc("/register", registerUser)
-	router.HandleFunc("POST /log", logEvent)
 
 	wrapperRouter := ApplyMiddleware(router, LogMiddleware, CorsMiddleware)
 
