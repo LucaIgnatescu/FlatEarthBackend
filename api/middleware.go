@@ -2,6 +2,7 @@ package api
 
 import (
 	"log"
+	"net"
 	"net/http"
 )
 
@@ -31,6 +32,26 @@ func CorsMiddleware(next http.Handler) http.HandlerFunc {
 func LogMiddleware(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Origin: %s, Method: %s\n", r.Header.Get("Origin"), r.Method)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func RateLimit(next http.Handler) http.HandlerFunc {
+	limiter := NewLimiter()
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip, _, err := net.SplitHostPort(r.RemoteAddr) // TODO: Handle proxies
+
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if limiter.Allow(ip) == false {
+			w.Header().Set("Retry-After", "1")
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }
