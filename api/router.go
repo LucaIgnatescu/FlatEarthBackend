@@ -2,11 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 type RegisterResponse struct {
@@ -115,6 +114,8 @@ type BugPayload struct {
 }
 
 func LogReport(w http.ResponseWriter, r *http.Request) {
+	const reportLength = 2000
+	const emailLength = 30
 	claims, ok := r.Context().Value("claims").(*UserClaims)
 	if !ok || claims == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -145,6 +146,13 @@ func LogReport(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	if len(payload.Email) > emailLength || len(payload.Report) > reportLength {
+		log.Println("Payload too large:", err)
+		w.WriteHeader(http.StatusRequestEntityTooLarge)
+		return
+	}
+
 	db, err := connectDB()
 	if err != nil {
 		log.Println("Could not connect to db:", err)
@@ -174,6 +182,7 @@ type Survey1Payload struct {
 }
 
 func LogSurvey1(w http.ResponseWriter, r *http.Request) {
+	const genderLength = 30
 	claims, ok := r.Context().Value("claims").(*UserClaims)
 	if !ok || claims == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -204,6 +213,13 @@ func LogSurvey1(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	if len(payload.Gender) > genderLength {
+		log.Println("Payload too large:", err)
+		w.WriteHeader(http.StatusRequestEntityTooLarge)
+		return
+	}
+
 	db, err := connectDB()
 	if err != nil {
 		log.Println("Could not connect to db:", err)
@@ -233,6 +249,7 @@ type Survey2Payload struct {
 }
 
 func LogSurvey2(w http.ResponseWriter, r *http.Request) {
+	const infoLength = 1000
 	claims, ok := r.Context().Value("claims").(*UserClaims)
 	if !ok || claims == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -263,6 +280,13 @@ func LogSurvey2(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	if len(payload.Info) > infoLength {
+		log.Println("Payload too large:", err)
+		w.WriteHeader(http.StatusRequestEntityTooLarge)
+		return
+	}
+
 	db, err := connectDB()
 	if err != nil {
 		log.Println("Could not connect to db:", err)
