@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// TODO: Redo this
 func extractIP(r *http.Request) (string, error) {
 	forwarded := r.Header.Get("X-Forwarded-For")
 	if forwarded != "" {
