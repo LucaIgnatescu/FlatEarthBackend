@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/LucaIgnatescu/FlatEarthBackend/api"
 	"github.com/joho/godotenv"
@@ -11,11 +12,18 @@ import (
 func main() {
 	godotenv.Load()
 	router := api.CreateRouter()
+
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "8080"
+	}
+
 	server := http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + port,
 		Handler: router,
 	}
-	log.Println("Listening on port 8080...")
+	log.Printf("Listening on port %s...", port)
 	err := server.ListenAndServe()
 	log.Fatal(err)
 }
