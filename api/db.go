@@ -47,7 +47,11 @@ func connectDB() (*sql.DB, error) {
 
 func insertNewUser(db *sql.DB, data *GeoData) (*UserRecord, error) {
 	if data == nil {
-		return nil, errors.New("Data object is null") // TODO: Support this
+		data = &GeoData{
+			Region: "Unknown",
+			Lat:    0.0,
+			Lon:    0.0,
+		}
 	}
 
 	query := `

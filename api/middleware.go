@@ -42,9 +42,9 @@ func RateLimitMiddleware(next http.Handler) http.HandlerFunc {
 	limiter := NewLimiter()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip, _, err := net.SplitHostPort(r.RemoteAddr) // TODO: Handle proxies
+		ip := getClientIP(r)
 
-		if err != nil {
+		if ip == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -56,6 +56,25 @@ func RateLimitMiddleware(next http.Handler) http.HandlerFunc {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func getClientIP(r *http.Request) string {
+	xForwardedFor := r.Header.Get("X-Forwarded-For")
+	if xForwardedFor != "" {
+		parts := strings.Split(xForwardedFor, ",")
+		return strings.TrimSpace(parts[0])
+	}
+
+	xRealIP := r.Header.Get("X-Real-IP")
+	if xRealIP != "" {
+		return xRealIP
+	}
+
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return ""
+	}
+	return host
 }
 
 func parseHeader(r *http.Request) string {
