@@ -31,12 +31,17 @@ func connectDB() (*sql.DB, error) {
 	dbuser := os.Getenv("DB_USER")
 	dbhost := os.Getenv("DB_HOST")
 	dbport := os.Getenv("DB_PORT")
+	dbname := os.Getenv("DB_NAME")
+
+	if dbname == "" {
+		dbname = "postgres"
+	}
 
 	if dbpwd == "" || dbuser == "" || dbhost == "" || dbport == "" {
 		return nil, errors.New("Error loading all environment variables")
 	}
-	connStr := fmt.Sprintf("user=%v password=%v host=%v port=%v dbname=postgres binary_parameters=yes",
-		dbuser, dbpwd, dbhost, dbport)
+	connStr := fmt.Sprintf("user=%v password=%v host=%v port=%v dbname=%v sslmode=require binary_parameters=yes",
+		dbuser, dbpwd, dbhost, dbport, dbname)
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
