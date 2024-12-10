@@ -26,7 +26,7 @@ type InteractionRecord struct {
 	Payload   interface{}
 }
 
-func connectDB() (*sql.DB, error) {
+func ConnectDB() (*sql.DB, error) {
 	dbpwd := os.Getenv("DB_PWD")
 	dbuser := os.Getenv("DB_USER")
 	dbhost := os.Getenv("DB_HOST")

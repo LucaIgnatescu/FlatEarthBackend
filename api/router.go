@@ -1,26 +1,26 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
-	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/google/uuid"
 )
+
+type RouterDependencies struct {
+	db *sql.DB
+}
 
 type RegisterResponse struct {
 	Status string `json:"status"`
 	Token  string `json:"token"`
 }
 
-func registerUser(w http.ResponseWriter, r *http.Request) {
-	db, err := connectDB()
-	if err != nil {
-		log.Println("Could not connect to db:", err)
-		w.WriteHeader(500)
-		return
-	}
-
+func (app *RouterDependencies) registerUser(w http.ResponseWriter, r *http.Request) {
+	db := app.db
 	data, err := getData()
 	if err != nil {
 		log.Println("Could not retrieve geo data:", err)
@@ -49,6 +49,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(response)
+	println("finished")
 	return
 }
 
@@ -58,7 +59,9 @@ type Interaction struct {
 	UserID    string
 }
 
-func LogEvent(w http.ResponseWriter, r *http.Request) {
+func (app *RouterDependencies) LogEvent(w http.ResponseWriter, r *http.Request) {
+	db := app.db
+
 	claims, ok := r.Context().Value("claims").(*UserClaims)
 	if !ok || claims == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -82,12 +85,7 @@ func LogEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	interaction.UserID = userID
-	db, err := connectDB()
-	if err != nil {
-		log.Println("Could not connect to db:", err)
-		w.WriteHeader(500)
-		return
-	}
+
 	_, err = insertEvent(db, &interaction)
 
 	if err != nil {
@@ -113,7 +111,7 @@ type BugPayload struct {
 	Email  string `json:"email"`
 }
 
-func LogReport(w http.ResponseWriter, r *http.Request) {
+func (app *RouterDependencies) LogReport(w http.ResponseWriter, r *http.Request) {
 	const reportLength = 2000
 	const emailLength = 30
 	claims, ok := r.Context().Value("claims").(*UserClaims)
@@ -153,13 +151,7 @@ func LogReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := connectDB()
-	if err != nil {
-		log.Println("Could not connect to db:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	err = insertBugReport(db, &payload, userUUID)
+	err = insertBugReport(app.db, &payload, userUUID)
 	if err != nil {
 		log.Println("Could not insert bug report:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -181,7 +173,7 @@ type Survey1Payload struct {
 	Gender  string  `json:"gender_detail"`
 }
 
-func LogSurvey1(w http.ResponseWriter, r *http.Request) {
+func (app *RouterDependencies) LogSurvey1(w http.ResponseWriter, r *http.Request) {
 	const genderLength = 30
 	claims, ok := r.Context().Value("claims").(*UserClaims)
 	if !ok || claims == nil {
@@ -220,13 +212,7 @@ func LogSurvey1(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := connectDB()
-	if err != nil {
-		log.Println("Could not connect to db:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	err = insertSurvey1(db, &payload, userUUID)
+	err = insertSurvey1(app.db, &payload, userUUID)
 	if err != nil {
 		log.Println("Could not insert bug report:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -248,7 +234,7 @@ type Survey2Payload struct {
 	Info    string `json:"text"`
 }
 
-func LogSurvey2(w http.ResponseWriter, r *http.Request) {
+func (app *RouterDependencies) LogSurvey2(w http.ResponseWriter, r *http.Request) {
 	const infoLength = 1000
 	claims, ok := r.Context().Value("claims").(*UserClaims)
 	if !ok || claims == nil {
@@ -287,13 +273,7 @@ func LogSurvey2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := connectDB()
-	if err != nil {
-		log.Println("Could not connect to db:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	err = insertSurvey2(db, &payload, userUUID)
+	err = insertSurvey2(app.db, &payload, userUUID)
 	if err != nil {
 		log.Println("Could not insert bug report:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -301,19 +281,20 @@ func LogSurvey2(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CreateRouter() http.Handler {
+func CreateRouter(db *sql.DB) http.Handler {
 	router := http.NewServeMux()
 	logRouter := http.NewServeMux()
+	app := RouterDependencies{db}
 
-	logRouter.HandleFunc("POST /report", LogReport)
-	logRouter.HandleFunc("POST /event", LogEvent)
-	logRouter.HandleFunc("POST /survey1", LogSurvey1)
-	logRouter.HandleFunc("POST /survey2", LogSurvey2)
+	logRouter.HandleFunc("POST /report", app.LogReport)
+	logRouter.HandleFunc("POST /event", app.LogEvent)
+	logRouter.HandleFunc("POST /survey1", app.LogSurvey1)
+	logRouter.HandleFunc("POST /survey2", app.LogSurvey2)
 
 	wrappedLogRouter := ApplyMiddleware(logRouter, AuthMiddleware, RateLimitMiddleware)
 
 	router.Handle("/log/", http.StripPrefix("/log", wrappedLogRouter))
-	router.HandleFunc("/register", registerUser)
+	router.HandleFunc("/register", app.registerUser)
 
 	wrapperRouter := ApplyMiddleware(router, LogMiddleware, CorsMiddleware)
 

@@ -11,10 +11,15 @@ import (
 
 func main() {
 	godotenv.Load()
-	router := api.CreateRouter()
+	db, err := api.ConnectDB()
+
+	if err != nil {
+		log.Fatalf("Could not connect to db: %v", err)
+	}
+
+	router := api.CreateRouter(db)
 
 	port := os.Getenv("PORT")
-
 	if port == "" {
 		port = "8080"
 	}
@@ -24,6 +29,6 @@ func main() {
 		Handler: router,
 	}
 	log.Printf("Listening on port %s...", port)
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	log.Fatal(err)
 }
