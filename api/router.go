@@ -49,7 +49,6 @@ func (app *RouterDependencies) registerUser(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Write(response)
-	println("finished")
 	return
 }
 
