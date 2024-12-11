@@ -280,6 +280,11 @@ func (app *RouterDependencies) LogSurvey2(w http.ResponseWriter, r *http.Request
 	}
 }
 
+func (*RouterDependencies) HandleIndex(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
 func CreateRouter(db *sql.DB) http.Handler {
 	router := http.NewServeMux()
 	logRouter := http.NewServeMux()
@@ -293,6 +298,7 @@ func CreateRouter(db *sql.DB) http.Handler {
 	wrappedLogRouter := ApplyMiddleware(logRouter, AuthMiddleware, RateLimitMiddleware)
 
 	router.Handle("/log/", http.StripPrefix("/log", wrappedLogRouter))
+	router.HandleFunc("/", app.HandleIndex)
 	router.HandleFunc("/register", app.registerUser)
 
 	wrapperRouter := ApplyMiddleware(router, LogMiddleware, CorsMiddleware)

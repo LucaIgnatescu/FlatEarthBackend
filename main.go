@@ -11,10 +11,15 @@ import (
 
 func main() {
 	godotenv.Load()
+	log.Println("Server starting... Connecting to DB")
 	db, err := api.ConnectDB()
 
 	if err != nil {
 		log.Fatalf("Could not connect to db: %v", err)
+	}
+
+	if err = db.Ping(); err != nil {
+		log.Fatalf("Database ping failed: %v", err)
 	}
 
 	router := api.CreateRouter(db)
