@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/LucaIgnatescu/FlatEarthBackend/api"
 	"github.com/joho/godotenv"
@@ -30,8 +31,10 @@ func main() {
 	}
 
 	server := http.Server{
-		Addr:    ":" + port,
-		Handler: router,
+		Addr:         ":" + port,
+		Handler:      router,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 	log.Printf("Listening on port %s...", port)
 	err = server.ListenAndServe()
