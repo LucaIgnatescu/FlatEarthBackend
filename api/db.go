@@ -11,11 +11,13 @@ import (
 )
 
 type UserRecord struct {
-	UserID   uuid.UUID
-	Region   string
-	Lat      float32
-	Lon      float32
-	JoinedAt string
+	UserID     uuid.UUID
+	RegionName string
+	Country    string
+	City       string
+	Lat        float32
+	Lon        float32
+	JoinedAt   string
 }
 
 type InteractionRecord struct {
@@ -63,7 +65,7 @@ func insertNewUser(db *sql.DB, data *GeoData) (*UserRecord, error) {
 
 	var row UserRecord
 	err := db.QueryRow(query, data.RegionName, data.Country, data.City, data.Lat, data.Lon).
-		Scan(&row.UserID, &row.Region, &row.Lat, &row.Lon, &row.JoinedAt)
+		Scan(&row.UserID, &row.RegionName, &row.City, &row.Country, &row.Lat, &row.Lon, &row.JoinedAt)
 
 	if err != nil {
 		return nil, err

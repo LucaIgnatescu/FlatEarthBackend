@@ -14,7 +14,7 @@ import (
 type GeoData struct {
 	RegionName string  `json:"regionName"`
 	Country    string  `json:"country"`
-	City       string  `json:"string"`
+	City       string  `json:"city"`
 	Lat        float32 `json:"lat"`
 	Lon        float32 `json:"lon"`
 	Status     string  `json:"status"`
@@ -30,7 +30,7 @@ func getData(r *http.Request) (*GeoData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprint("http://ip-api.com/json/%s", ip), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://ip-api.com/json/%s", ip), nil)
 	if err != nil {
 		log.Println("Error creating request")
 		return nil, err
