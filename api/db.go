@@ -52,21 +52,19 @@ func ConnectDB() (*sql.DB, error) {
 
 func insertNewUser(db *sql.DB, data *GeoData) (*UserRecord, error) {
 	if data == nil {
-		data = &GeoData{
-			Region: "Unknown",
-			Lat:    0.0,
-			Lon:    0.0,
-		}
+		return nil, errors.New("Data should not be an empty object")
 	}
 
 	query := `
-  INSERT INTO users (user_id, region, lat, lon, joined_at) VALUES
-    (DEFAULT, $1, $2, $3, DEFAULT) 
+  INSERT INTO users (user_id, regionName, country, city, lat, lon, joined_at) VALUES
+    (DEFAULT, $1, $2, $3, $4, $5, DEFAULT) 
     RETURNING *
   `
+
 	var row UserRecord
-	err := db.QueryRow(query, data.Region, data.Lat, data.Lon).
+	err := db.QueryRow(query, data.RegionName, data.Country, data.City, data.Lat, data.Lon).
 		Scan(&row.UserID, &row.Region, &row.Lat, &row.Lon, &row.JoinedAt)
+
 	if err != nil {
 		return nil, err
 	}

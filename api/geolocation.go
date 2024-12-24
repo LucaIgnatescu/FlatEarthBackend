@@ -1,35 +1,42 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-	"net"
+	"log"
 	"net/http"
-	"strings"
+	"time"
 )
 
-// TODO: Redo this
-func extractIP(r *http.Request) (string, error) {
-	forwarded := r.Header.Get("X-Forwarded-For")
-	if forwarded != "" {
-		return strings.Split(forwarded, ",")[0], nil
-	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return "", errors.New("Error parsing IP")
-	}
-	return host, nil
-}
-
 type GeoData struct {
-	Region string  `json:"region"`
-	Lat    float32 `json:"lat"`
-	Lon    float32 `json:"lon"`
+	RegionName string  `json:"regionName"`
+	Country    string  `json:"country"`
+	City       string  `json:"string"`
+	Lat        float32 `json:"lat"`
+	Lon        float32 `json:"lon"`
+	Status     string  `json:"status"`
 }
 
-func getData() (*GeoData, error) {
-	res, err := http.Get("http://ip-api.com/json/") // TODO: Check timeout timer
+func getData(r *http.Request) (*GeoData, error) {
+	ip, ok := r.Context().Value("ip").(string)
+	if !ok {
+		log.Println("Could not retrieve ip")
+		return nil, errors.New("invalid ip address")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprint("http://ip-api.com/json/%s", ip), nil)
+	if err != nil {
+		log.Println("Error creating request")
+		return nil, err
+	}
+
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +46,12 @@ func getData() (*GeoData, error) {
 
 	err = json.Unmarshal(data, &geoData)
 	if err != nil {
+		log.Println("Could not unmarshal response")
 		return nil, err
+	}
+
+	if geoData.Status == "fail" {
+		log.Println("Api request failed")
 	}
 
 	return &geoData, nil

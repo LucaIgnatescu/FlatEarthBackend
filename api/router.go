@@ -21,30 +21,37 @@ type RegisterResponse struct {
 
 func (app *RouterDependencies) registerUser(w http.ResponseWriter, r *http.Request) {
 	db := app.db
-	data, err := getData()
+	data, err := getData(r)
+
 	if err != nil {
 		log.Println("Could not retrieve geo data:", err)
-		data = &GeoData{}
+		data = &GeoData{
+			RegionName: "Unknown",
+			Country:    "Unknown",
+			City:       "Unknown",
+			Lat:        0,
+			Lon:        0,
+			Status:     "",
+		}
 	}
 
 	user, err := insertNewUser(db, data)
-
 	if err != nil {
 		log.Println("Could not insert record:", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	token, err := generateToken(user.UserID.String())
 	if err != nil {
 		log.Println("Could not generate token:", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	response, err := json.Marshal(RegisterResponse{"success", token})
 	if err != nil {
 		log.Println("Could not construct response:", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -89,7 +96,7 @@ func (app *RouterDependencies) LogEvent(w http.ResponseWriter, r *http.Request) 
 
 	if err != nil {
 		log.Println("Could not insert interaction record:", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

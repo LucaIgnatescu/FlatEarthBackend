@@ -31,24 +31,24 @@ func TestEnv(t *testing.T) {
 
 func TestConn(t *testing.T) {
 	godotenv.Load()
-	db, err := connectDB()
+	db, err := ConnectDB()
 	if err != nil {
-		t.Fatal("Could not connect to db")
+		t.Fatal("Could not Connect to db")
 	}
 	err = db.Ping()
 	if err != nil {
-		t.Fatal("Could not connect to db")
+		t.Fatal("Could not Connect to db")
 	}
 }
 
 func TestInserts(t *testing.T) {
 	godotenv.Load()
-	db, err := connectDB()
+	db, err := ConnectDB()
 
 	if err != nil {
 		t.Fatal(err)
 	}
-	data := GeoData{"NY", 32.5, 11.1}
+	data := GeoData{"A", "A", "A", 0, 0, "A"}
 	row, err := insertNewUser(db, &data)
 	if err != nil {
 		t.Fatal(err)
@@ -58,7 +58,7 @@ func TestInserts(t *testing.T) {
 		t.Fatal("Nil row returned")
 	}
 
-	if row.Region != data.Region || row.Lat != data.Lat || row.Lon != data.Lon {
+	if row.Region != data.RegionName || row.Lat != data.Lat || row.Lon != data.Lon {
 		t.Fatal("Record not matching provided data")
 	}
 
@@ -80,7 +80,7 @@ func TestInserts(t *testing.T) {
 
 func TestInsertWithoutData(t *testing.T) {
 	godotenv.Load()
-	db, err := connectDB()
+	db, err := ConnectDB()
 
 	if err != nil {
 		t.Fatal(err)
@@ -96,7 +96,7 @@ func TestInsertWithoutData(t *testing.T) {
 
 func TestMalformedInsert(t *testing.T) {
 	godotenv.Load()
-	db, err := connectDB()
+	db, err := ConnectDB()
 
 	if err != nil {
 		t.Fatal(err)
