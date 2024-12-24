@@ -42,9 +42,9 @@ func RateLimitMiddleware(next http.Handler) http.HandlerFunc {
 	limiter := NewLimiter()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := getClientIP(r)
+		ip, ok := r.Context().Value("ip").(string)
 
-		if ip == "" {
+		if ip == "" || !ok {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
