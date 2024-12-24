@@ -77,6 +77,14 @@ func getClientIP(r *http.Request) string {
 	return host
 }
 
+func IPMiddleware(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ip := getClientIP(r)
+		ctx := context.WithValue(r.Context(), "ip", ip)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+}
+
 func parseHeader(r *http.Request) string {
 	split := strings.Split(r.Header.Get("Authorization"), " ")
 

@@ -301,7 +301,7 @@ func CreateRouter(db *sql.DB) http.Handler {
 	router.HandleFunc("/", app.HandleIndex)
 	router.HandleFunc("/register", app.registerUser)
 
-	wrapperRouter := ApplyMiddleware(router, LogMiddleware, CorsMiddleware)
+	wrapperRouter := ApplyMiddleware(router, IPMiddleware, LogMiddleware, CorsMiddleware)
 
 	return wrapperRouter
 }
