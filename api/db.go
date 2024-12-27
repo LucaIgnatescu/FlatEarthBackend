@@ -58,7 +58,7 @@ func insertNewUser(db *sql.DB, data *GeoData) (*UserRecord, error) {
 	}
 
 	query := `
-  INSERT INTO users (user_id, regionName, country, city, lat, lon, joined_at) VALUES
+  INSERT INTO users (user_id, region_name, country, city, lat, lon, joined_at) VALUES
     (DEFAULT, $1, $2, $3, $4, $5, DEFAULT) 
     RETURNING *
   `
