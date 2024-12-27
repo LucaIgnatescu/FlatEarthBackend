@@ -7,8 +7,32 @@ import (
 	"time"
 
 	"github.com/LucaIgnatescu/FlatEarthBackend/api"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 	"github.com/joho/godotenv"
 )
+
+func runServer(router http.Handler) {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	server := http.Server{
+		Addr:         ":" + port,
+		Handler:      router,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	log.Printf("Listening on port %s...", port)
+	err := server.ListenAndServe()
+	log.Fatal(err)
+}
+
+func runLambda(router http.Handler) {
+	lambda.Start(httpadapter.New(router).ProxyWithContext)
+}
 
 func main() {
 	godotenv.Load()
@@ -24,19 +48,11 @@ func main() {
 	}
 
 	router := api.CreateRouter(db)
+	deployMode := os.Getenv("DEPLOY_MODE")
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	if deployMode == "serverless" {
+		runLambda(router)
+	} else {
+		runServer(router)
 	}
-
-	server := http.Server{
-		Addr:         ":" + port,
-		Handler:      router,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-	log.Printf("Listening on port %s...", port)
-	err = server.ListenAndServe()
-	log.Fatal(err)
 }

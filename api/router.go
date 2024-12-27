@@ -288,7 +288,7 @@ func (app *RouterDependencies) LogSurvey2(w http.ResponseWriter, r *http.Request
 }
 
 func (*RouterDependencies) HandleIndex(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hello from Lambda!"))
 	return
 }
 
