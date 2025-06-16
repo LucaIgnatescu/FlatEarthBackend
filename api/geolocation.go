@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -27,10 +28,23 @@ func getData(r *http.Request) (*GeoData, error) {
 		return nil, errors.New("invalid ip address")
 	}
 
+	apiKey := os.Getenv("IPAPI_KEY")
+
+	if apiKey == "" {
+		log.Println("Unset IPAPI Key. Adjust environment variables.")
+		return nil, errors.New("Unset IPAPI_KEY variable")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://ip-api.com/json/%s", ip), nil)
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf("http://pro.ip-api.com/json/%s?key=%s", ip, apiKey),
+		nil,
+	)
+
 	if err != nil {
 		log.Println("Error creating request")
 		return nil, err

@@ -302,7 +302,7 @@ func CreateRouter(db *sql.DB) http.Handler {
 	logRouter.HandleFunc("POST /survey1", app.LogSurvey1)
 	logRouter.HandleFunc("POST /survey2", app.LogSurvey2)
 
-	wrappedLogRouter := ApplyMiddleware(logRouter, AuthMiddleware, RateLimitMiddleware)
+	wrappedLogRouter := ApplyMiddleware(logRouter, AuthMiddleware)
 
 	router.Handle("/log/", http.StripPrefix("/log", wrappedLogRouter))
 	router.HandleFunc("/", app.HandleIndex)

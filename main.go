@@ -37,6 +37,7 @@ func runLambda(router http.Handler) {
 func main() {
 	godotenv.Load()
 	log.Println("Server starting... Connecting to DB")
+
 	db, err := api.ConnectDB()
 
 	if err != nil {
