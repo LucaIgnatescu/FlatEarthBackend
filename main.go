@@ -19,10 +19,11 @@ func runServer(router http.Handler) {
 	}
 
 	server := http.Server{
-		Addr:         ":" + port,
-		Handler:      router,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		Addr:           ":" + port,
+		Handler:        router,
+		ReadTimeout:    5 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 64 << 10,
 	}
 
 	log.Printf("Listening on port %s...", port)

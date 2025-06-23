@@ -77,7 +77,13 @@ func (app *RouterDependencies) LogEvent(w http.ResponseWriter, r *http.Request) 
 	userID := claims.UserID
 
 	var interaction Interaction
-	body, err := io.ReadAll(r.Body)
+
+	const maxBodySize = 1 << 20
+
+	limitReader := http.MaxBytesReader(w, r.Body, maxBodySize)
+	defer limitReader.Close()
+
+	body, err := io.ReadAll(limitReader)
 	if err != nil {
 		log.Println("Could not read body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -126,7 +132,12 @@ func (app *RouterDependencies) LogReport(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
+	const maxBodySize = 1 << 20
+
+	limitReader := http.MaxBytesReader(w, r.Body, maxBodySize)
+	defer limitReader.Close()
+
+	body, err := io.ReadAll(limitReader)
 	if err != nil {
 		log.Println("Could not read body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -187,7 +198,12 @@ func (app *RouterDependencies) LogSurvey1(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
+	const maxBodySize = 1 << 20
+
+	limitReader := http.MaxBytesReader(w, r.Body, maxBodySize)
+	defer limitReader.Close()
+
+	body, err := io.ReadAll(limitReader)
 	if err != nil {
 		log.Println("Could not read body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -248,7 +264,12 @@ func (app *RouterDependencies) LogSurvey2(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	body, err := io.ReadAll(r.Body)
+	const maxBodySize = 1 << 20
+
+	limitReader := http.MaxBytesReader(w, r.Body, maxBodySize)
+	defer limitReader.Close()
+
+	body, err := io.ReadAll(limitReader)
 	if err != nil {
 		log.Println("Could not read body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
